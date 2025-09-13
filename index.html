@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk dengan Jarak</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f9f9f9; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #4CAF50; color: white; }
+    .header input { width: 60%; padding: 5px; border: none; border-radius: 5px; }
+    .header button { padding: 5px 10px; margin-left: 5px; border: none; border-radius: 5px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 10px; padding: 10px; }
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; transition: transform .2s; text-decoration: none; color: inherit; }
+    .card:hover { transform: scale(1.03); }
+    .card img { width: 100%; height: 120px; object-fit: cover; }
+    .card-body { padding: 8px; }
+    .title { font-size: 14px; font-weight: bold; margin: 5px 0; }
+    .price { color: #e91e63; font-weight: bold; }
+    .partner { font-size: 12px; color: #555; }
+    .meta { font-size: 12px; color: #777; }
+    .address { font-size: 12px; color: #444; margin-top: 5px; }
+    .distance { font-size: 12px; color: #00796b; font-weight: bold; }
+    .warning { background: #ffeb3b; padding: 5px; font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <input type="text" id="search" placeholder="Cari produk...">
+    <button onclick="toggleDark()">🌙</button>
+    <button onclick="sortHarga()">↕️ Harga</button>
+  </div>
+
+  <div id="warning" class="warning">🔔 Menunggu izin lokasi...</div>
+  <div class="grid" id="produkGrid">Loading...</div>
+
+  <script>
+    let userLat = null, userLng = null;
+
+    const urls = [
+      "https://app.jagel.id/api/v2/customer/component/68b5cf157e8ee?codename=tosimaru&page=1&app_mode=1&per_page=24",
+      "https://app.jagel.id/api/v2/customer/list/68b8337397337/children?codename=tosimaru&page=1&search_list=",
+      "https://app.jagel.id/api/v2/customer/component/68b5cfa03ee39?page=1"
+    ];
+
+    let allProduk = [];
+
+    async function loadProduk() {
+      let results = [];
+
+      for (let u of urls) {
+        try {
+          let res = await fetch(u);
+          let json = await res.json();
+          let produk = [];
+
+          if (json.data && json.data.lists && json.data.lists.data) {
+            produk = json.data.lists.data.filter(p => p.type === 0);
+          } else if (json.data && json.data.data && Array.isArray(json.data.data)) {
+            produk = json.data.data.filter(p => p.type === 0);
+          }
+
+          results = results.concat(produk);
+        } catch (e) {
+          console.error("Error fetch", u, e);
+        }
+      }
+
+      allProduk = results;
+      renderProduk(allProduk);
+    }
+
+    function getLink(p) {
+      if (p.link_view) return p.link_view;
+      if (p.view_uid) return "action://p/" + p.view_uid;
+      return "#";
+    }
+
+    function calcDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return (R * c).toFixed(1);
+    }
+
+    function renderProduk(list) {
+      const grid = document.getElementById("produkGrid");
+      if (!list.length) {
+        grid.innerHTML = "<p>Tidak ada produk</p>";
+        return;
+      }
+
+      grid.innerHTML = list.map(p => {
+        let alamat = p.origin_address || "Alamat tidak tersedia";
+        let jarak = "-";
+        if (userLat && p.origin_lat && p.origin_lng) {
+          jarak = calcDistance(userLat, userLng, parseFloat(p.origin_lat), parseFloat(p.origin_lng)) + " Km";
+        }
+        return `
+          <a class="card" href="${getLink(p)}">
+            <img src="https://www.usahaumkm.com/api/listimage/${p.image}" alt="${p.title}">
+            <div class="card-body">
+              <div class="title">${p.title}</div>
+              <div class="price">${p.currency || "Rp"} ${p.price ? p.price.toLocaleString() : 0}</div>
+              <div class="partner">Toko: ${p.partner_name || '-'}</div>
+              <div class="meta">⭐ ${p.review_rating || 0} | 📦 ${p.sold || 0}</div>
+              <div class="address">📍 ${alamat}</div>
+              <div class="distance">${jarak}</div>
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
+
+    function sortHarga() {
+      let sorted = [...allProduk].sort((a,b)=>a.price-b.price);
+      renderProduk(sorted);
+    }
+
+    document.getElementById("search").addEventListener("input", e => {
+      let q = e.target.value.toLowerCase();
+      let filtered = allProduk.filter(p => p.title.toLowerCase().includes(q));
+      renderProduk(filtered);
+    });
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          document.getElementById("warning").innerText = "✅ Lokasi user aktif";
+          loadProduk();
+        },
+        err => {
+          document.getElementById("warning").innerText = "⚠️ Lokasi user tidak aktif, jarak Km tidak ditampilkan";
+          loadProduk();
+        }
+      );
+    } else {
+      document.getElementById("warning").innerText = "⚠️ Browser tidak mendukung lokasi";
+      loadProduk();
+    }
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk dengan Jarak</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f9f9f9; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #4CAF50; color: white; }
+    .header input { width: 60%; padding: 5px; border: none; border-radius: 5px; }
+    .header button { padding: 5px 10px; margin-left: 5px; border: none; border-radius: 5px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 10px; padding: 10px; }
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; transition: transform .2s; text-decoration: none; color: inherit; }
+    .card:hover { transform: scale(1.03); }
+    .card img { width: 100%; height: 120px; object-fit: cover; }
+    .card-body { padding: 8px; }
+    .title { font-size: 14px; font-weight: bold; margin: 5px 0; }
+    .price { color: #e91e63; font-weight: bold; }
+    .partner { font-size: 12px; color: #555; }
+    .meta { font-size: 12px; color: #777; }
+    .address { font-size: 12px; color: #444; margin-top: 5px; }
+    .distance { font-size: 12px; color: #00796b; font-weight: bold; }
+    .warning { background: #ffeb3b; padding: 5px; font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <input type="text" id="search" placeholder="Cari produk...">
+    <button onclick="toggleDark()">🌙</button>
+    <button onclick="sortHarga()">↕️ Harga</button>
+  </div>
+
+  <div id="warning" class="warning">🔔 Menunggu izin lokasi...</div>
+  <div class="grid" id="produkGrid">Loading...</div>
+
+  <script>
+    let userLat = null, userLng = null;
+
+    const urls = [
+      "https://app.jagel.id/api/v2/customer/component/68b5cf157e8ee?codename=tosimaru&page=1&app_mode=1&per_page=24",
+      "https://app.jagel.id/api/v2/customer/list/68b8337397337/children?codename=tosimaru&page=1&search_list=",
+      "https://app.jagel.id/api/v2/customer/component/68b5cfa03ee39?page=1"
+    ];
+
+    let allProduk = [];
+
+    async function loadProduk() {
+      let results = [];
+
+      for (let u of urls) {
+        try {
+          let res = await fetch(u);
+          let json = await res.json();
+          let produk = [];
+
+          if (json.data && json.data.lists && json.data.lists.data) {
+            produk = json.data.lists.data.filter(p => p.type === 0);
+          } else if (json.data && json.data.data && Array.isArray(json.data.data)) {
+            produk = json.data.data.filter(p => p.type === 0);
+          }
+
+          results = results.concat(produk);
+        } catch (e) {
+          console.error("Error fetch", u, e);
+        }
+      }
+
+      allProduk = results;
+      renderProduk(allProduk);
+    }
+
+    function getLink(p) {
+      if (p.link_view) return p.link_view;
+      if (p.view_uid) return "action://p/" + p.view_uid;
+      return "#";
+    }
+
+    function calcDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return (R * c).toFixed(1);
+    }
+
+    function renderProduk(list) {
+      const grid = document.getElementById("produkGrid");
+      if (!list.length) {
+        grid.innerHTML = "<p>Tidak ada produk</p>";
+        return;
+      }
+
+      grid.innerHTML = list.map(p => {
+        let alamat = p.origin_address || "Alamat tidak tersedia";
+        let jarak = "-";
+        if (userLat && p.origin_lat && p.origin_lng) {
+          jarak = calcDistance(userLat, userLng, parseFloat(p.origin_lat), parseFloat(p.origin_lng)) + " Km";
+        }
+        return `
+          <a class="card" href="${getLink(p)}">
+            <img src="https://www.usahaumkm.com/api/listimage/${p.image}" alt="${p.title}">
+            <div class="card-body">
+              <div class="title">${p.title}</div>
+              <div class="price">${p.currency || "Rp"} ${p.price ? p.price.toLocaleString() : 0}</div>
+              <div class="partner">Toko: ${p.partner_name || '-'}</div>
+              <div class="meta">⭐ ${p.review_rating || 0} | 📦 ${p.sold || 0}</div>
+              <div class="address">📍 ${alamat}</div>
+              <div class="distance">${jarak}</div>
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
+
+    function sortHarga() {
+      let sorted = [...allProduk].sort((a,b)=>a.price-b.price);
+      renderProduk(sorted);
+    }
+
+    document.getElementById("search").addEventListener("input", e => {
+      let q = e.target.value.toLowerCase();
+      let filtered = allProduk.filter(p => p.title.toLowerCase().includes(q));
+      renderProduk(filtered);
+    });
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          document.getElementById("warning").innerText = "✅ Lokasi user aktif";
+          loadProduk();
+        },
+        err => {
+          document.getElementById("warning").innerText = "⚠️ Lokasi user tidak aktif, jarak Km tidak ditampilkan";
+          loadProduk();
+        }
+      );
+    } else {
+      document.getElementById("warning").innerText = "⚠️ Browser tidak mendukung lokasi";
+      loadProduk();
+    }
+  </script>
+</body>
+</html>

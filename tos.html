@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>📍 Tes Lokasi User</title>
+</head>
+<body>
+  <h2>📍 Tes Lokasi User</h2>
+  <p id="status">⏳ Mencoba ambil lokasi...</p>
+
+  <script>
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          document.getElementById("status").textContent =
+            "✅ Lokasi ditemukan: " + lat + ", " + lng;
+        },
+        (err) => {
+          document.getElementById("status").textContent =
+            "❌ Gagal ambil lokasi: " + err.message;
+        }
+      );
+    } else {
+      document.getElementById("status").textContent =
+        "❌ Geolocation tidak didukung browser ini.";
+    }
+  </script>
+</body>
+</html>

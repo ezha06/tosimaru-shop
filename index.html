@@ -1,46 +1,39 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tosimaru Shop - Lokasi</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambil Lokasi Otomatis</title>
 </head>
 <body>
-  <h2>📍 Tes Ambil Lokasi</h2>
-  <button onclick="getUserLocation()">Ambil Lokasi</button>
-  <p id="status">Belum ambil lokasi</p>
-  <p id="alamat"></p>
+  <h2>📍 Tes Ambil Lokasi Otomatis</h2>
+  <div id="status">Mengambil lokasi...</div>
+  <div id="coords"></div>
 
   <script>
-    // fungsi ambil lokasi
-    function getUserLocation() {
-      const statusEl = document.getElementById("status");
-      const alamatEl = document.getElementById("alamat");
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            let lat = position.coords.latitude;
+            let lon = position.coords.longitude;
+            document.getElementById("status").innerHTML = "✅ Lokasi berhasil didapat";
+            document.getElementById("coords").innerHTML = "Koordinat: " + lat + ", " + lon;
 
-      if (!navigator.geolocation) {
-        statusEl.textContent = "❌ Browser tidak mendukung Geolocation";
-        return;
+            // simpan ke localStorage agar bisa dipanggil di Jagel
+            localStorage.setItem("userLocation", JSON.stringify({lat: lat, lon: lon}));
+          },
+          function(error) {
+            document.getElementById("status").innerHTML = "❌ Gagal mengambil lokasi: " + error.message;
+          }
+        );
+      } else {
+        document.getElementById("status").innerHTML = "❌ Browser tidak mendukung geolokasi";
       }
-
-      statusEl.textContent = "⏳ Mengambil lokasi...";
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-
-          statusEl.textContent = "✅ Lokasi berhasil didapat";
-          alamatEl.textContent = `Koordinat: ${lat}, ${lng}`;
-
-          // kirim ke localStorage (biar Jagel bisa baca)
-          localStorage.setItem("userLocation", JSON.stringify({ lat, lng }));
-        },
-        (err) => {
-          statusEl.textContent = "❌ Gagal mengambil lokasi";
-          alamatEl.textContent = err.message;
-        }
-      );
     }
+
+    // panggil otomatis saat halaman dibuka
+    window.onload = getLocation;
   </script>
 </body>
 </html>

@@ -3,13 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tes Lokasi</title>
+  <title>Tes Lokasi Otomatis</title>
 </head>
 <body>
   <h2>📍 Tes Lokasi Otomatis</h2>
-  <div id="lokasiBox">⏳ Sedang ambil lokasi...</div>
+  <p id="output">⏳ Sedang ambil lokasi...</p>
 
-  <!-- panggil JS dari GitHub -->
-  <script src="https://raw.githubusercontent.com/ezha06/tosimaru-shop/main/toko.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const output = document.getElementById("output");
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          output.textContent = `✅ Lokasi didapat: ${latitude}, ${longitude}`;
+        },
+        (err) => {
+          output.textContent = `❌ Gagal ambil lokasi: ${err.message}`;
+        }
+      );
+    } else {
+      output.textContent = "❌ Browser tidak mendukung geolocation.";
+    }
+  });
+  </script>
 </body>
 </html>

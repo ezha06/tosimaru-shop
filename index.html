@@ -3,37 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ambil Lokasi Otomatis</title>
+  <title>Tes Lokasi</title>
 </head>
 <body>
-  <h2>📍 Tes Ambil Lokasi Otomatis</h2>
-  <div id="status">Mengambil lokasi...</div>
-  <div id="coords"></div>
+  <h2>📍 Tes Lokasi Otomatis</h2>
+  <div id="lokasiBox">⏳ Sedang ambil lokasi...</div>
 
-  <script>
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            let lat = position.coords.latitude;
-            let lon = position.coords.longitude;
-            document.getElementById("status").innerHTML = "✅ Lokasi berhasil didapat";
-            document.getElementById("coords").innerHTML = "Koordinat: " + lat + ", " + lon;
-
-            // simpan ke localStorage agar bisa dipanggil di Jagel
-            localStorage.setItem("userLocation", JSON.stringify({lat: lat, lon: lon}));
-          },
-          function(error) {
-            document.getElementById("status").innerHTML = "❌ Gagal mengambil lokasi: " + error.message;
-          }
-        );
-      } else {
-        document.getElementById("status").innerHTML = "❌ Browser tidak mendukung geolokasi";
-      }
-    }
-
-    // panggil otomatis saat halaman dibuka
-    window.onload = getLocation;
-  </script>
+  <!-- panggil JS dari GitHub -->
+  <script src="https://raw.githubusercontent.com/ezha06/tosimaru-shop/main/toko.js"></script>
 </body>
 </html>

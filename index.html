@@ -1,78 +1,101 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lokasi GPS via Browser</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lokasi Pengguna</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    body {font-family:"Poppins",sans-serif;background:#f7f8f7;color:#333;padding:30px;text-align:center;}
-    .user-info {background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px 20px;max-width:400px;margin:0 auto;}
-    .user-info p {margin:6px 0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;}
-    .user-info i {color:#2E7D32;font-size:16px;}
-    #retryBtn {margin-top:15px;background:#2E7D32;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;display:none;}
+    body {
+      font-family: "Poppins", sans-serif;
+      background: #f7f8f7;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      padding: 20px 25px;
+      text-align: center;
+      max-width: 360px;
+      width: 90%;
+    }
+    h2 {margin-bottom: 8px;}
+    p {margin: 6px 0;}
+    .loc {color: #2E7D32; font-weight: 600;}
+    button {
+      background: #2E7D32;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+      display: none;
+    }
   </style>
 </head>
 <body>
-
-  <div class="user-info">
-    <p><i class="fa-solid fa-user"></i> Hi, <b>Reza</b></p>
-    <p><i class="fa-solid fa-location-dot"></i>
-      Alamat: <span id="alamatUser">Mengambil lokasi...</span>
-    </p>
-    <button id="retryBtn"><i class="fa-solid fa-rotate-right"></i> Aktifkan Lokasi Lagi</button>
+  <div class="card">
+    <h2><i class="fa-solid fa-location-dot"></i> Lokasi Pengguna</h2>
+    <p id="status">Menunggu lokasi...</p>
+    <p id="alamatUser" class="loc"></p>
+    <button id="btnReload">Ambil Lagi</button>
   </div>
 
   <script>
-  const spanAlamat = document.getElementById("alamatUser");
-  const btnRetry = document.getElementById("retryBtn");
+  const statusEl = document.getElementById("status");
+  const alamatEl = document.getElementById("alamatUser");
+  const btnReload = document.getElementById("btnReload");
 
-  async function ambilAlamat(lat, lon) {
+  async function ambilNamaDaerah(lat, lon) {
     try {
       const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
       const data = await res.json();
       const kota = data.city || data.locality || data.principalSubdivision || "Tidak diketahui";
-      spanAlamat.textContent = `${kota} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+      alamatEl.textContent = `${kota} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
     } catch {
-      spanAlamat.textContent = "Gagal mengenali lokasi";
+      alamatEl.textContent = `${lat}, ${lon}`;
     }
   }
 
-  function mintaGPS() {
-    spanAlamat.textContent = "Mengambil lokasi...";
-    btnRetry.style.display = "none";
-    if (!navigator.geolocation) {
-      spanAlamat.textContent = "Browser tidak mendukung GPS";
-      return;
-    }
+  async function tampilkanLokasi(lat, lon, sumber) {
+    statusEl.textContent = sumber === "jagel" ? "Lokasi dari aplikasi Jagel:" : "Lokasi dari GPS browser:";
+    await ambilNamaDaerah(parseFloat(lat), parseFloat(lon));
+  }
+
+  function ambilDariGPS() {
+    statusEl.textContent = "Mengambil lokasi GPS...";
     navigator.geolocation.getCurrentPosition(
-      pos => ambilAlamat(pos.coords.latitude, pos.coords.longitude),
+      pos => tampilkanLokasi(pos.coords.latitude, pos.coords.longitude, "gps"),
       err => {
-        spanAlamat.textContent = "Izin lokasi ditolak atau gagal";
-        btnRetry.style.display = "inline-block";
+        statusEl.textContent = "Gagal ambil lokasi";
+        alamatEl.textContent = err.message;
+        btnReload.style.display = "inline-block";
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
 
-  btnRetry.addEventListener("click", mintaGPS);
-  mintaGPS();
+  // Cek apakah ada lat/lon di URL (Jagel)
+  const params = new URLSearchParams(window.location.search);
+  const lat = params.get("lat");
+  const lon = params.get("lon");
+
+  if (lat && lon) {
+    tampilkanLokasi(lat, lon, "jagel");
+  } else if ("geolocation" in navigator && location.protocol === "https:") {
+    ambilDariGPS();
+  } else {
+    statusEl.textContent = "Tidak ada data lokasi";
+  }
+
+  btnReload.onclick = ambilDariGPS;
   </script>
-<script>
-if ("geolocation" in navigator) {
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const { latitude, longitude } = pos.coords;
-      alert(`Lokasi kamu:\nLatitude: ${latitude}\nLongitude: ${longitude}`);
-    },
-    err => {
-      alert("Gagal ambil lokasi: " + err.message);
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-} else {
-  alert("Browser kamu tidak mendukung GPS");
-}
-</script>
 </body>
 </html>

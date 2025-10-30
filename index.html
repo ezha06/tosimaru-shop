@@ -1,32 +1,63 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tes Lokasi Otomatis</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lokasi GPS via Browser</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    body {font-family:"Poppins",sans-serif;background:#f7f8f7;color:#333;padding:30px;text-align:center;}
+    .user-info {background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px 20px;max-width:400px;margin:0 auto;}
+    .user-info p {margin:6px 0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;}
+    .user-info i {color:#2E7D32;font-size:16px;}
+    #retryBtn {margin-top:15px;background:#2E7D32;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;display:none;}
+  </style>
 </head>
 <body>
-  <h2>📍 Tes Lokasi Otomatis</h2>
-  <p id="output">⏳ Sedang ambil lokasi...</p>
+
+  <div class="user-info">
+    <p><i class="fa-solid fa-user"></i> Hi, <b>Reza</b></p>
+    <p><i class="fa-solid fa-location-dot"></i>
+      Alamat: <span id="alamatUser">Mengambil lokasi...</span>
+    </p>
+    <button id="retryBtn"><i class="fa-solid fa-rotate-right"></i> Aktifkan Lokasi Lagi</button>
+  </div>
 
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const output = document.getElementById("output");
+  const spanAlamat = document.getElementById("alamatUser");
+  const btnRetry = document.getElementById("retryBtn");
 
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          output.textContent = `✅ Lokasi didapat: ${latitude}, ${longitude}`;
-        },
-        (err) => {
-          output.textContent = `❌ Gagal ambil lokasi: ${err.message}`;
-        }
-      );
-    } else {
-      output.textContent = "❌ Browser tidak mendukung geolocation.";
+  async function ambilAlamat(lat, lon) {
+    try {
+      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
+      const data = await res.json();
+      const kota = data.city || data.locality || data.principalSubdivision || "Tidak diketahui";
+      spanAlamat.textContent = `${kota} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    } catch {
+      spanAlamat.textContent = "Gagal mengenali lokasi";
     }
-  });
+  }
+
+  function mintaGPS() {
+    spanAlamat.textContent = "Mengambil lokasi...";
+    btnRetry.style.display = "none";
+    if (!navigator.geolocation) {
+      spanAlamat.textContent = "Browser tidak mendukung GPS";
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => ambilAlamat(pos.coords.latitude, pos.coords.longitude),
+      err => {
+        spanAlamat.textContent = "Izin lokasi ditolak atau gagal";
+        btnRetry.style.display = "inline-block";
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  btnRetry.addEventListener("click", mintaGPS);
+  mintaGPS();
   </script>
+
 </body>
 </html>

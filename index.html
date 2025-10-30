@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Lokasi Pengguna</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lokasi Pengguna - Tosimaru</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     body {
       font-family: "Poppins", sans-serif;
@@ -19,15 +19,22 @@
     .card {
       background: #fff;
       border-radius: 14px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
       padding: 20px 25px;
       text-align: center;
       max-width: 360px;
       width: 90%;
     }
-    h2 {margin-bottom: 8px;}
-    p {margin: 6px 0;}
-    .loc {color: #2E7D32; font-weight: 600;}
+    h2 {
+      margin-bottom: 8px;
+    }
+    p {
+      margin: 6px 0;
+    }
+    .loc {
+      color: #2E7D32;
+      font-weight: 600;
+    }
     button {
       background: #2E7D32;
       color: #fff;
@@ -45,57 +52,38 @@
     <h2><i class="fa-solid fa-location-dot"></i> Lokasi Pengguna</h2>
     <p id="status">Menunggu lokasi...</p>
     <p id="alamatUser" class="loc"></p>
-    <button id="btnReload">Ambil Lagi</button>
   </div>
 
   <script>
-  const statusEl = document.getElementById("status");
-  const alamatEl = document.getElementById("alamatUser");
-  const btnReload = document.getElementById("btnReload");
+    const statusEl = document.getElementById("status");
+    const alamatEl = document.getElementById("alamatUser");
 
-  async function ambilNamaDaerah(lat, lon) {
-    try {
-      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
-      const data = await res.json();
-      const kota = data.city || data.locality || data.principalSubdivision || "Tidak diketahui";
-      alamatEl.textContent = `${kota} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-    } catch {
-      alamatEl.textContent = `${lat}, ${lon}`;
+    // Ambil parameter dari URL (lat dan lon dari Jagel)
+    const params = new URLSearchParams(window.location.search);
+    const lat = params.get("lat");
+    const lon = params.get("lon");
+
+    async function ambilNamaDaerah(lat, lon) {
+      try {
+        const res = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`
+        );
+        const data = await res.json();
+        const kota =
+          data.city || data.locality || data.principalSubdivision || "Tidak diketahui";
+        alamatEl.textContent = `${kota} (${lat}, ${lon})`;
+      } catch (err) {
+        alamatEl.textContent = `${lat}, ${lon}`;
+      }
     }
-  }
 
-  async function tampilkanLokasi(lat, lon, sumber) {
-    statusEl.textContent = sumber === "jagel" ? "Lokasi dari aplikasi Jagel:" : "Lokasi dari GPS browser:";
-    await ambilNamaDaerah(parseFloat(lat), parseFloat(lon));
-  }
-
-  function ambilDariGPS() {
-    statusEl.textContent = "Mengambil lokasi GPS...";
-    navigator.geolocation.getCurrentPosition(
-      pos => tampilkanLokasi(pos.coords.latitude, pos.coords.longitude, "gps"),
-      err => {
-        statusEl.textContent = "Gagal ambil lokasi";
-        alamatEl.textContent = err.message;
-        btnReload.style.display = "inline-block";
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }
-
-  // Cek apakah ada lat/lon di URL (Jagel)
-  const params = new URLSearchParams(window.location.search);
-  const lat = params.get("lat");
-  const lon = params.get("lon");
-
-  if (lat && lon) {
-    tampilkanLokasi(lat, lon, "jagel");
-  } else if ("geolocation" in navigator && location.protocol === "https:") {
-    ambilDariGPS();
-  } else {
-    statusEl.textContent = "Tidak ada data lokasi";
-  }
-
-  btnReload.onclick = ambilDariGPS;
+    if (lat && lon) {
+      statusEl.textContent = "Lokasi dari aplikasi Jagel:";
+      ambilNamaDaerah(lat, lon);
+    } else {
+      statusEl.textContent = "Tidak ada data lokasi.";
+      alamatEl.textContent = "Gunakan tombol lokasi di aplikasi.";
+    }
   </script>
 </body>
 </html>

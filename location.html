@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Ambil Lokasi</title>
+</head>
+<body>
+<script>
+navigator.geolocation.getCurrentPosition(
+  pos => {
+    window.parent.postMessage({
+      lat: pos.coords.latitude,
+      lon: pos.coords.longitude,
+      source: "github-location"
+    }, "*");
+  },
+  err => {
+    window.parent.postMessage({
+      error: err.message,
+      source: "github-location"
+    }, "*");
+  },
+  { enableHighAccuracy: true, timeout: 10000 }
+);
+</script>
+</body>
+</html>

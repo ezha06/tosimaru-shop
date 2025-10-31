@@ -1,220 +1,127 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TOSIMARU — Sayurbox Style</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk Terdekat</title>
   <style>
-    :root{--green:#2E7D32;--bg:#f8faf8;--radius:14px;}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:"Poppins",sans-serif;background:var(--bg);color:#333;padding-bottom:90px}
-
-    .topbar{position:fixed;top:0;left:0;right:0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.05);z-index:50;padding:8px 12px}
-    .search-box{display:flex;align-items:center;background:#f1f3f1;border-radius:var(--radius);padding:8px 12px}
-    .search-box input{flex:1;border:0;outline:0;background:transparent;font-size:15px}
-    .search-box button{background:var(--green);color:#fff;border:0;border-radius:12px;padding:6px 12px;font-size:14px}
-    a{text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent;pointer-events:auto;background-color:transparent;}
-
-    .user-info{margin-top:60px;background:#fff;padding:10px 16px;box-shadow:0 1px 5px rgba(0,0,0,0.05);display:flex;flex-direction:column;gap:4px;z-index:10;position:relative;}
-    .user-info p{font-size:14px;color:#444;display:flex;align-items:center;gap:6px;}
-    .user-info i{color:var(--green);}
-    #lokasiUser{font-size:13px;color:#333;margin-left:2px;}
-
-    .banner{width:100%;overflow:hidden;position:relative}
-    .banner-track{display:flex;transition:transform .5s ease;width:100%}
-    .banner-track img{width:100%;height:auto;object-fit:cover;flex-shrink:0}
-
-    .categories{display:flex;padding:10px;flex-wrap:wrap;justify-content:center;text-align:center;}
-    .cat-item{flex:0 0 calc(33.3333% - 20px);margin:10px;box-sizing:border-box;padding:5px;border-radius:10%;background-color:white}
-    .cat-item img{width:60px;height:auto;border-radius:10%;object-fit:cover;margin-bottom:6px;}
-    .cat-item span{display:block;font-size:14px;font-weight:500}
-
-    #all-container{display:flex;flex-direction:column;gap:14px;padding:0 14px;margin-bottom:40px}
-    .product{position:relative;display:flex;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);overflow:hidden;padding-right:56px}
-    .product-img{width:110px;height:110px;flex-shrink:0;overflow:hidden;cursor:pointer;position:relative}
-    .product-img img{width:100%;height:100%;object-fit:cover;display:block}
-    .badge{position:absolute;left:0;right:0;bottom:0;background:rgba(46,125,50,0.9);color:#fff;text-align:center;font-size:13px;padding:4px 0;font-weight:500}
-    .details{padding:10px 12px;flex:1;display:flex;flex-direction:column;justify-content:center}
-    .details h4{font-size:15px;margin-bottom:4px}
-    .meta{font-size:12px;color:#777;line-height:1.4}
-    .btn-add{position:absolute;right:12px;bottom:12px;background:var(--green);color:#fff;border:none;border-radius:50%;width:38px;height:38px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.18);}
-    .load-more-btn{display:block;margin:16px auto 40px;padding:10px 24px;font-size:14px;background:var(--green);color:#fff;border:0;border-radius:25px;cursor:pointer}
-
-    .skeleton-card{display:flex;gap:10px;background:#fff;border-radius:14px;overflow:hidden;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
-    .skeleton{background:linear-gradient(90deg,#eee 25%,#f5f5f5 37%,#eee 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;}
-    .skeleton-img{width:110px;height:110px;border-radius:10px;}
-    .skeleton-line{height:10px;border-radius:4px;margin-top:10px;}
-    @keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
-
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;justify-content:space-around;align-items:center;height:70px;border-top:1px solid #eee;border-radius:20px 20px 0 0;box-shadow:0 -2px 10px rgba(0,0,0,0.05);z-index:40}
-    .nav-item{text-align:center;font-size:12px;color:#777;flex:1}
-    .nav-item i{font-size:20px;display:block;margin-bottom:3px}
-    .nav-center{position:relative;top:-25px;left:0.5%;background:var(--green);color:#fff;width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 8px rgba(0,0,0,0.2)}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+    }
+    .card-body {
+      padding: 8px;
+    }
+    .title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #222;
+    }
+    .price {
+      color: #16a34a;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="search-box">
-      <input name="ycari" placeholder="Cari sayur, buah, daging..." />
-      <button id="btnCari">Cari</button>
-    </div>
-  </div>
+  <div id="produkGrid" class="grid">Memuat produk...</div>
 
-  <div class="user-info">
-    <p><i class="fa-solid fa-user"></i> Hi, <b>{nama}</b></p>
-    <p><i class="fa-solid fa-location-dot"></i><span id="lokasiUser">📍 Menunggu lokasi...</span></p>
-  </div>
+<script>
+// ===== API =====
+const API_TOKO = "https://app.jagel.id/api/v2/customer/list/68b8337397337?codename=tosimaru";
+const API_PRODUK = "https://app.jagel.id/api/v2/customer/list/68b8337397337/children?codename=tosimaru";
 
-  <div class="banner">
-    <div class="banner-track" id="bannerTrack">
-      <img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/2_20251030_101758_00017327144184826601323.png?w=1024">
-      <img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/3_20251030_101758_00027347799059572218339.png?w=1024">
-      <img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/1_20251030_101758_00004226765315423546097.png?w=1024">
-    </div>
-  </div>
+// ===== Fungsi hitung jarak (km) =====
+function hitungJarak(lat1, lon1, lat2, lon2) {
+  const R = 6371, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
-  <div class="categories">
-    <div class="cat-item"><a href="https://jgjk.mobi/m/68c8301a773a3"><img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/20251030_122600_00008449047243611774347.png?w=500"><span>Sayur</span></a></div>
-    <div class="cat-item"><a href="https://jgjk.mobi/m/68c83e7c31f0f"><img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/20251030_122600_00016987972357298527781.png?w=500"><span>Buah</span></a></div>
-    <div class="cat-item"><a href="https://jgjk.mobi/m/68c83f4b46807"><img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/20251030_122600_00024412823110098310122.png?w=500"><span>Ikan & Frozen</span></a></div>
-    <div class="cat-item"><a href="https://jgjk.mobi/m/68c83ff118ccf"><img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/20251030_122600_00031021223090000637714.png?w=500"><span>Sembako</span></a></div>
-    <div class="cat-item"><a href="https://jgjk.mobi/m/68c8d17edd292"><img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/20251030_122600_00047004916620438328283.png?w=500"><span>Campuran</span></a></div>
-    <div class="cat-item"><a href="https://jgjk.mobi/m/68c8405086cef"><img src="https://tosimaru9.wordpress.com/wp-content/uploads/2025/10/20251030_122600_00055045883635484866910.png?w=500"><span>Perlengkapan anak</span></a></div>
-  </div>
+// ===== Format harga =====
+function formatHarga(nilai, currency) {
+  if (!nilai && nilai !== 0) return "";
+  return (currency || "Rp") + " " + Number(nilai).toLocaleString("id-ID");
+}
 
-  <div style="padding:0 10px">
-    <h2 style="font-size:16px;color:var(--green);padding:0 14px 8px">✨ Terbaru</h2>
-    <div id="all-container"></div>
-    <button id="load-more-all" class="load-more-btn">Tampilkan Lebih Banyak</button>
-  </div>
+// ===== Render produk =====
+function renderProduk(list, jarak) {
+  const grid = document.getElementById("produkGrid");
+  grid.innerHTML = list.map(p => `
+    <a class="card" href="action://p/${p.view_uid}">
+      <img src="https://www.jagel.id/api/listimage/${p.image}" alt="${p.title}" 
+           onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+      <div class="card-body">
+        <div class="title">${p.title}</div>
+        <div class="price">${formatHarga(p.price, p.currency)}</div>
+        <div class="meta">📍 ${jarak.toFixed(2)} km</div>
+      </div>
+    </a>
+  `).join("");
+}
 
-  <div class="bottom-nav">
-    <div class="nav-item active"><a href="#"><i class="fa-solid fa-house"></i></a>Home</div>
-    <div class="nav-item"><a href="https://jgjk.mobi/act/shopping"><i class="fa-solid fa-receipt"></i></a>Pesanan</div>
-    <div class="nav-center"><a href="https://jgjk.mobi/act/cart"><i class="fa-solid fa-basket-shopping"></i></a></div>
-    <div class="nav-item"><a href="https://jgjk.mobi/m/T321214152205ed4aa60268730.46654562"><i class="fa-solid fa-comments"></i></a>Chat</div>
-    <div class="nav-item"><a href="https://jgjk.mobi/act/account"><i class="fa-solid fa-user"></i></a>Akun</div>
-  </div>
+// ===== Jalankan =====
+navigator.geolocation.getCurrentPosition(async pos => {
+  const userLat = pos.coords.latitude;
+  const userLon = pos.coords.longitude;
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
-  document.addEventListener("DOMContentLoaded",()=>{
-    // Search
-    const cari=()=>{const val=$("input[name='ycari']").val()||"";window.location.replace("https://jgjk.mobi/act/search/"+encodeURIComponent(val));};
-    $("#btnCari").on("click",cari);
-    $("input[name='ycari']").on("keypress",e=>{if(e.which===13)cari();});
+  try {
+    // Ambil data toko
+    const tokoRes = await fetch(API_TOKO);
+    const tokoData = await tokoRes.json();
+    const toko = tokoData.data;
 
-    // Banner slide otomatis
-    const bannerTrack=document.getElementById("bannerTrack");
-    const slides=bannerTrack.querySelectorAll("img");
-    let idx=0;
-    setInterval(()=>{idx=(idx+1)%slides.length;bannerTrack.style.transform=`translateX(-${idx*100}%)`;},4000);
+    const tokoLat = parseFloat(toko.origin_lat);
+    const tokoLon = parseFloat(toko.origin_lng);
+    const jarak = hitungJarak(userLat, userLon, tokoLat, tokoLon);
 
-    // === Lokasi otomatis ===
-    const params = new URLSearchParams(window.location.search);
-    const lat = params.get("lat");
-    const lon = params.get("lon");
+    // Ambil produk
+    const produkRes = await fetch(API_PRODUK);
+    const produkData = await produkRes.json();
+    const produkList = produkData.data.data || [];
 
-    async function ambilNamaDaerah(lat, lon) {
-      try {
-        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
-        const data = await res.json();
-        const kota = data.city || data.locality || data.principalSubdivision || "Tidak diketahui";
-        document.getElementById("lokasiUser").textContent = `📍 ${kota} (${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)})`;
-      } catch {
-        document.getElementById("lokasiUser").textContent = `📍 ${lat}, ${lon}`;
-      }
-    }
+    renderProduk(produkList, jarak);
 
-    if (lat && lon) ambilNamaDaerah(lat, lon);
-    else document.getElementById("lokasiUser").textContent = "📍 Klik tombol lokasi di aplikasi";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("produkGrid").innerHTML = "<p>❌ Gagal memuat produk.</p>";
+  }
 
-    // Produk
-    const apiLinks=[
-      "https://app.jagel.id/api/v2/customer/component/68b5cf157e8ee?codename=tosimaru&page=1&app_mode=1&per_page=24",
-      "https://app.jagel.id/api/v2/customer/component/68b5cfa03ee39?codename=tosimaru&page=1&app_mode=1&per_page=24"
-    ];
-    const container=document.getElementById("all-container");
-    const loadBtn=document.getElementById("load-more-all");
-    let allProducts=[],displayIndexAll=0,displayStep=10;
-
-    function showSkeleton(n=6){
-      container.innerHTML="";
-      for(let i=0;i<n;i++){
-        container.innerHTML+=`
-          <div class="skeleton-card">
-            <div class="skeleton skeleton-img"></div>
-            <div style="flex:1">
-              <div class="skeleton skeleton-line" style="width:80%"></div>
-              <div class="skeleton skeleton-line" style="width:60%"></div>
-            </div>
-          </div>`;
-      }
-    }
-
-    async function fetchJSON(url){
-      try{const r=await fetch(url);return await r.json();}
-      catch{return null;}
-    }
-
-    async function fetchProducts(uid){
-      const u=`https://app.jagel.id/api/v2/customer/list/${uid}/children?page=1&codename=tosimaru&app_mode=1&per_page=24`;
-      const d=await fetchJSON(u);
-      const list=d?.data?.data || d?.data?.lists?.data || [];
-      return Array.isArray(list)?list:[];
-    }
-
-    function createCard(p){
-      const img=p.image?`https://www.jagel.id/api/listimage/${p.image}`:"https://via.placeholder.com/150";
-      const price=p.price&&p.currency?`${p.currency} ${p.price.toLocaleString()}`:"-";
-      const link=`action://p/${p.view_uid}`;
-      const el=document.createElement("div");
-      el.className="product";
-      el.innerHTML=`
-        <div class="product-img" data-link="${link}">
-          <img src="${img}">
-          <div class="badge">${price}</div>
-        </div>
-        <div class="details">
-          <h4>${p.title||"-"}</h4>
-          <div class="meta">Rate : ⭐ ${p.review_rating??0}<br>Terjual : ${p.sold??0}</div>
-        </div>
-        <button class="btn-add"><i class="fa-solid fa-plus"></i></button>`;
-      el.querySelector(".product-img").onclick=()=>window.location.href=link;
-      el.querySelector(".btn-add").onclick=(e)=>{e.stopPropagation();window.location.href=link;};
-      return el;
-    }
-
-    async function loadProducts(){
-      showSkeleton(6);
-      let tmp=[];
-      const results=await Promise.all(apiLinks.map(fetchJSON));
-      for(const c of results){
-        if(!c)continue;
-        const items=c.data?.lists?.data||[];
-        for(const s of items){
-          if(s.type===4){
-            const children=await fetchProducts(s.view_uid);
-            children.forEach(p=>tmp.push(p));
-          }else tmp.push(s);
-        }
-      }
-      allProducts=tmp.filter(p=>p&&p.title);
-      container.innerHTML="";
-      displayNextProducts();
-    }
-
-    function displayNextProducts(){
-      const next=allProducts.slice(displayIndexAll,displayIndexAll+displayStep);
-      next.forEach(p=>container.appendChild(createCard(p)));
-      displayIndexAll+=displayStep;
-      if(displayIndexAll>=allProducts.length)loadBtn.style.display="none";
-    }
-
-    loadBtn.onclick=displayNextProducts;
-    loadProducts();
-  });
-  </script>
+}, err => {
+  document.getElementById("produkGrid").innerHTML = "<p>❌ Lokasi tidak diizinkan.</p>";
+  console.error(err);
+});
+</script>
 </body>
 </html>

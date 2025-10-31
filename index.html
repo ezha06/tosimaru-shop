@@ -30,58 +30,36 @@
       height: 140px;
       object-fit: cover;
     }
-    .card-body {
-      padding: 8px;
-    }
-    .title {
-      font-weight: 600;
-      font-size: 14px;
-      margin-bottom: 4px;
-      color: #222;
-    }
-    .price {
-      color: #16a34a;
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .meta {
-      font-size: 12px;
-      color: #666;
-      margin-top: 4px;
-    }
+    .card-body { padding: 8px; }
+    .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #222; }
+    .price { color: #16a34a; font-weight: 600; font-size: 13px; }
+    .meta { font-size: 12px; color: #666; margin-top: 4px; }
   </style>
 </head>
 <body>
-  <div id="produkGrid" class="grid">Memuat produk...</div>
+  <div id="produkGrid" class="grid">Menunggu izin lokasi...</div>
 
 <script>
-// ===== API =====
 const API_TOKO = "https://app.jagel.id/api/v2/customer/list/68b8337397337?codename=tosimaru";
 const API_PRODUK = "https://app.jagel.id/api/v2/customer/list/68b8337397337/children?codename=tosimaru";
 
-// ===== Fungsi hitung jarak (km) =====
 function hitungJarak(lat1, lon1, lat2, lon2) {
   const R = 6371, toRad = d => d * Math.PI / 180;
   const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-            Math.sin(dLon/2)**2;
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ===== Format harga =====
 function formatHarga(nilai, currency) {
   if (!nilai && nilai !== 0) return "";
   return (currency || "Rp") + " " + Number(nilai).toLocaleString("id-ID");
 }
 
-// ===== Render produk =====
 function renderProduk(list, jarak) {
   const grid = document.getElementById("produkGrid");
   grid.innerHTML = list.map(p => `
     <a class="card" href="action://p/${p.view_uid}">
-      <img src="https://www.jagel.id/api/listimage/${p.image}" alt="${p.title}" 
-           onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+      <img src="https://www.jagel.id/api/listimage/${p.image}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
       <div class="card-body">
         <div class="title">${p.title}</div>
         <div class="price">${formatHarga(p.price, p.currency)}</div>
@@ -91,36 +69,31 @@ function renderProduk(list, jarak) {
   `).join("");
 }
 
-// ===== Jalankan =====
 navigator.geolocation.getCurrentPosition(async pos => {
   const userLat = pos.coords.latitude;
   const userLon = pos.coords.longitude;
 
   try {
-    // Ambil data toko
-    const tokoRes = await fetch(API_TOKO);
+    const [tokoRes, produkRes] = await Promise.all([
+      fetch(API_TOKO),
+      fetch(API_PRODUK)
+    ]);
+
     const tokoData = await tokoRes.json();
-    const toko = tokoData.data;
-
-    const tokoLat = parseFloat(toko.origin_lat);
-    const tokoLon = parseFloat(toko.origin_lng);
-    const jarak = hitungJarak(userLat, userLon, tokoLat, tokoLon);
-
-    // Ambil produk
-    const produkRes = await fetch(API_PRODUK);
     const produkData = await produkRes.json();
+
+    const toko = tokoData.data;
     const produkList = produkData.data.data || [];
 
+    const jarak = hitungJarak(userLat, userLon, parseFloat(toko.origin_lat), parseFloat(toko.origin_lng));
     renderProduk(produkList, jarak);
 
   } catch (err) {
     console.error(err);
     document.getElementById("produkGrid").innerHTML = "<p>❌ Gagal memuat produk.</p>";
   }
-
 }, err => {
   document.getElementById("produkGrid").innerHTML = "<p>❌ Lokasi tidak diizinkan.</p>";
-  console.error(err);
 });
 </script>
 </body>

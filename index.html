@@ -24,25 +24,36 @@
       text-decoration: none;
       color: inherit;
       display: block;
+      transition: transform 0.15s ease;
     }
+    .card:hover { transform: scale(1.02); }
     .card img {
       width: 100%;
       height: 140px;
       object-fit: cover;
+      display: block;
     }
     .card-body { padding: 8px; }
     .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #222; }
     .price { color: #16a34a; font-weight: 600; font-size: 13px; }
     .meta { font-size: 12px; color: #666; margin-top: 4px; }
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #777;
+    }
   </style>
 </head>
 <body>
-  <div id="produkGrid" class="grid">Menunggu izin lokasi...</div>
+  <div id="produkGrid" class="grid"></div>
 
 <script>
 const API_TOKO = "https://app.jagel.id/api/v2/customer/list/68b8337397337?codename=tosimaru";
 const API_PRODUK = "https://app.jagel.id/api/v2/customer/list/68b8337397337/children?codename=tosimaru";
 
+const grid = document.getElementById("produkGrid");
+
+// Hitung jarak antar koordinat (dalam km)
 function hitungJarak(lat1, lon1, lat2, lon2) {
   const R = 6371, toRad = d => d * Math.PI / 180;
   const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
@@ -50,51 +61,91 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Format harga
 function formatHarga(nilai, currency) {
   if (!nilai && nilai !== 0) return "";
   return (currency || "Rp") + " " + Number(nilai).toLocaleString("id-ID");
 }
 
-function renderProduk(list, jarak) {
-  const grid = document.getElementById("produkGrid");
+// Render produk ke tampilan
+function renderProduk(list, jarak = null) {
+  if (!list || list.length === 0) {
+    grid.innerHTML = "<div class='loading'>Tidak ada produk ditemukan.</div>";
+    return;
+  }
   grid.innerHTML = list.map(p => `
     <a class="card" href="action://p/${p.view_uid}">
-      <img src="https://www.jagel.id/api/listimage/${p.image}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+      <img loading="lazy" src="https://www.jagel.id/api/listimage/${p.image}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
       <div class="card-body">
         <div class="title">${p.title}</div>
         <div class="price">${formatHarga(p.price, p.currency)}</div>
-        <div class="meta">📍 ${jarak.toFixed(2)} km</div>
+        ${jarak ? `<div class="meta">📍 ${jarak.toFixed(1)} km</div>` : ""}
       </div>
     </a>
   `).join("");
 }
 
-navigator.geolocation.getCurrentPosition(async pos => {
-  const userLat = pos.coords.latitude;
-  const userLon = pos.coords.longitude;
-
-  try {
-    const [tokoRes, produkRes] = await Promise.all([
-      fetch(API_TOKO),
-      fetch(API_PRODUK)
-    ]);
-
-    const tokoData = await tokoRes.json();
-    const produkData = await produkRes.json();
-
-    const toko = tokoData.data;
-    const produkList = produkData.data.data || [];
-
-    const jarak = hitungJarak(userLat, userLon, parseFloat(toko.origin_lat), parseFloat(toko.origin_lng));
-    renderProduk(produkList, jarak);
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("produkGrid").innerHTML = "<p>❌ Gagal memuat produk.</p>";
+// Ambil produk dari API atau cache
+async function ambilProduk() {
+  const cache = localStorage.getItem("produkData");
+  if (cache) {
+    try {
+      const data = JSON.parse(cache);
+      renderProduk(data);
+    } catch {}
   }
-}, err => {
-  document.getElementById("produkGrid").innerHTML = "<p>❌ Lokasi tidak diizinkan.</p>";
-});
+  try {
+    const res = await fetch(API_PRODUK, { cache: "no-store" });
+    const json = await res.json();
+    const produk = json.data.data || [];
+    localStorage.setItem("produkData", JSON.stringify(produk));
+    return produk;
+  } catch (err) {
+    console.error("Gagal ambil produk:", err);
+    return [];
+  }
+}
+
+// Tampilkan produk terdekat
+async function tampilProduk(lat, lon) {
+  grid.innerHTML = "<div class='loading'>Memuat produk terdekat...</div>";
+  try {
+    const [tokoRes, produkList] = await Promise.all([
+      fetch(API_TOKO).then(r => r.json()),
+      ambilProduk()
+    ]);
+    const toko = tokoRes.data;
+    const jarak = hitungJarak(lat, lon, parseFloat(toko.origin_lat), parseFloat(toko.origin_lng));
+    renderProduk(produkList, jarak);
+  } catch (err) {
+    console.error("Gagal tampil:", err);
+    grid.innerHTML = "<div class='loading'>Gagal memuat data.</div>";
+  }
+}
+
+// Inisialisasi — tampilkan langsung dari cache lalu update lokasi
+(async () => {
+  grid.innerHTML = "<div class='loading'>Menunggu izin lokasi...</div>";
+  const cacheLoc = localStorage.getItem("userLoc");
+  if (cacheLoc) {
+    const { lat, lon } = JSON.parse(cacheLoc);
+    tampilProduk(lat, lon); // tampil cepat dari cache
+  }
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    localStorage.setItem("userLoc", JSON.stringify({ lat, lon }));
+    tampilProduk(lat, lon); // update pakai lokasi baru
+  }, err => {
+    console.warn("Lokasi tidak diizinkan:", err);
+    grid.innerHTML = "<div class='loading'>❌ Akses lokasi ditolak.</div>";
+  }, {
+    enableHighAccuracy: true,
+    timeout: 5000,
+    maximumAge: 10000
+  });
+})();
 </script>
 </body>
 </html>
